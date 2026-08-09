@@ -15,6 +15,12 @@ export default async function handler(req, res) {
   const path = slug.join('/');
   const targetUrl = `https://dummy-todo-api.onrender.com/${path}`;
 
+  // Debugging options
+  console.log('Received request for:', req.url);
+  console.log('Slug from query:', req.query.slug);
+  console.log('Constructed path:', path);
+  console.log('Target URL:', targetUrl);
+
   // Prepare fetch options
   const fetchOptions = {
     method: req.method,
