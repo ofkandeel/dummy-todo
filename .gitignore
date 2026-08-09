@@ -38,3 +38,5 @@ Thumbs.db
 # Expo
 .expo/
 .expo-shared/
+.vercel
+.env*
