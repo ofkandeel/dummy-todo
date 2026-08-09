@@ -2,7 +2,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://dummy-todo-api.onrender.com/api/$1"
+      "dest": "https://dummy-todo-api.onrender.com/api/$1",
+      "status": 200,
+      "headers": {
+        "x-vercel-proxy": "1"
+      }
     },
     {
       "src": "/(.*)",
