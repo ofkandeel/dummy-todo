@@ -1,8 +1,8 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://dummy-todo-api.onrender.com/api/$1"
-    }
-  ]
+    "rewrites": [
+        {
+            "source": "/api/health",
+            "destination": "/api/health"
+        }
+    ]
 }
