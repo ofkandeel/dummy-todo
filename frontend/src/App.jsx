@@ -17,7 +17,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 
 // API base URL (points to your local backend)
-const API_BASE_URL = 'https://dummy-todo-api.onrender.com';
+const API_BASE_URL = '/api';
 
 function App() {
   const [todos, setTodos] = useState([]);
