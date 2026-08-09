@@ -3,10 +3,6 @@
         {
             "source": "/api/(.*)",
             "destination": "https://dummy-todo-api.onrender.com/api/$1"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/frontend/index.html"
         }
     ]
 }
