@@ -63,6 +63,11 @@ def get_db():
     finally:
         db.close()
 
+# API Root
+@app.get("/api")
+def api_root():
+    return {"message": "Todo API is running", "endpoints": ["/health", "/todos", "/docs"]}
+
 # Health check
 @app.get("/health")
 def health_check():
