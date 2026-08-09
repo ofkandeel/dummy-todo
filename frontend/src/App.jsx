@@ -87,7 +87,7 @@ function App() {
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom align="center">
-          Todo App (Full Stack Demo)
+          Todo App (Vercel Test)
         </Typography>
 
         {/* Create Todo Form */}
