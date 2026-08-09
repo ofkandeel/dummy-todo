@@ -1,16 +1,8 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://dummy-todo-api.onrender.com/api/$1",
-      "status": 200,
-      "headers": {
-        "x-vercel-proxy": "1"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "https://dummy-todo-api.onrender.com/api/$1"
     }
   ]
 }
