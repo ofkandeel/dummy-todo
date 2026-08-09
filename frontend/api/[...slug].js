@@ -10,16 +10,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Build the target URL
-  const slug = req.query.slug || [];
-  const path = slug.join('/');
+  // ✅ Parse the path from the request URL
+  const url = new URL(req.url, `https://${req.headers.host}`);
+  const pathSegments = url.pathname.replace(/^\/api\//, '').split('/').filter(Boolean);
+  const path = pathSegments.join('/');
   const targetUrl = `https://dummy-todo-api.onrender.com/${path}`;
-
-  // Debugging options
-  console.log('Received request for:', req.url);
-  console.log('Slug from query:', req.query.slug);
-  console.log('Constructed path:', path);
-  console.log('Target URL:', targetUrl);
 
   // Prepare fetch options
   const fetchOptions = {
