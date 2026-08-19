@@ -73,6 +73,17 @@ def api_root():
 def health_check():
     return {"status": "healthy"}
 
+# Database Connection Test
+@app.get("/db-test")
+def db_test():
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1"))
+            return {"status": "success", "result": result.scalar()}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
 # Create a todo
 @app.post("/todos", response_model=TodoResponse)
 def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
