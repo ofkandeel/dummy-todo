@@ -1,5 +1,5 @@
 import os
-import base64
+# import base64
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +29,8 @@ SUPABASE_URL = "https://uzhxkwavsumrzrmnitin.supabase.co"
 
 # Public key - hardcoded for testing on render
 PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
-LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFWDRySmREZ0c2T3h3QVZIZG1NOHE4dGI5L1JtOQovVW1uZDNSRU1Nb2Y2d3hjZnBqWjg1d0pUMmVmbUJGVCtkSFphNzVnQ2xwTWh1WnVFRnB6OWJXMFB3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEX4rJdDgG6OxwAVHdmM8q8tb9/Rm9
+/Umnd3REMMof6wxcfpjZ85wJT2efmBFT+dHZa75gClpMhuZuEFpz9bW0Pw==
 -----END PUBLIC KEY-----"""
 print("✅ Public key hardcoded successfully")
 
