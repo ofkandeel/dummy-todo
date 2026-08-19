@@ -87,38 +87,26 @@ security = HTTPBearer()
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
-    print(f"🔍 Token received (first 50 chars): {token[:50]}...")
-    print(f"🔍 Token length: {len(token)}")
-    
     try:
-        # First, decode without verification to see the payload
-        unverified_payload = jwt.decode(token, options={"verify_signature": False})
-        print(f"🔍 Unverified payload: {unverified_payload}")
+        # First, decode without verification to see the algorithm
+        unverified_header = jwt.get_unverified_header(token)
+        print(f"🔍 Token algorithm: {unverified_header.get('alg')}")
         
         # Now verify with the public key
         payload = jwt.decode(
             token,
             PUBLIC_KEY,
-            algorithms=["ES256"],
+            algorithms=["ES256", "HS256"],  # Try both algorithms
             options={"verify_aud": False}
         )
-        print(f"✅ Verified payload: {payload}")
         user_id = payload.get("sub")
         if user_id is None:
-            print("❌ No 'sub' claim in payload")
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-        print(f"✅ User ID: {user_id}")
         return user_id
-    except jwt.ExpiredSignatureError:
-        print("❌ Token has expired")
-        raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as e:
         print(f"❌ Invalid token error: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
-    except Exception as e:
-        print(f"❌ Unexpected error: {str(e)}")
-        raise HTTPException(status_code=401, detail=f"Unexpected error: {str(e)}")
-    
+        
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
