@@ -27,18 +27,24 @@ Base = declarative_base()
 # Supabase configuration
 SUPABASE_URL = "https://uzhxkwavsumrzrmnitin.supabase.co"
 
-# Get the public key from environment (base64-encoded)
-public_key_b64 = os.getenv("SUPABASE_PUBLIC_KEY_B64")
-if not public_key_b64:
-    raise ValueError("SUPABASE_PUBLIC_KEY_B64 environment variable is not set")
+# Public key - hardcoded for testing on render
+PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
+LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFWDRySmREZ0c2T3h3QVZIZG1NOHE4dGI5L1JtOQovVW1uZDNSRU1Nb2Y2d3hjZnBqWjg1d0pUMmVmbUJGVCtkSFphNzVnQ2xwTWh1WnVFRnB6OWJXMFB3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+-----END PUBLIC KEY-----"""
+print("✅ Public key hardcoded successfully")
 
-try:
-    decoded_bytes = base64.b64decode(public_key_b64)
-    PUBLIC_KEY = decoded_bytes.decode('utf-8')
-    print("✅ Public key loaded successfully")
-except UnicodeDecodeError as e:
-    print(f"❌ Error decoding public key: {e}")
-    raise
+# Get the public key from environment (base64-encoded)
+# public_key_b64 = os.getenv("SUPABASE_PUBLIC_KEY_B64")
+#if not public_key_b64:
+#    raise ValueError("SUPABASE_PUBLIC_KEY_B64 environment variable is not set")
+#
+#try:
+#    decoded_bytes = base64.b64decode(public_key_b64)
+#    PUBLIC_KEY = decoded_bytes.decode('utf-8')
+#    print("✅ Public key loaded successfully")
+#except UnicodeDecodeError as e:
+#    print(f"❌ Error decoding public key: {e}")
+#    raise
 
 # Database model
 class Todo(Base):
