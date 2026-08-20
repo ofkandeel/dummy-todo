@@ -2,6 +2,7 @@ import os
 # import base64
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, text
@@ -54,7 +55,7 @@ class Todo(Base):
     title = Column(String, index=True)
     description = Column(String, index=True)
     completed = Column(Boolean, default=False)
-    user_id = Column(UUID(as_uuid=True), nullable=False)
+    user_id = Column(String, index=True)  # Add this line
 
 # Pydantic schemas
 class TodoCreate(BaseModel):
@@ -74,6 +75,13 @@ class TodoResponse(BaseModel):
 # FastAPI app
 app = FastAPI(title="Todo API", version="1.0.0")
 
+# Clerk configuration
+clerk_config = ClerkConfig(
+    jwks_url="https://api.clerk.com/v1/jwks",  # Uses Clerk's API public endpoint
+    leeway=5.0  # Adds 5 seconds tolerance for clock drift
+)
+clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -86,27 +94,12 @@ app.add_middleware(
 # Security
 security = HTTPBearer()
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    try:
-        # First, decode without verification to see the algorithm
-        unverified_header = jwt.get_unverified_header(token)
-        print(f"🔍 Token algorithm: {unverified_header.get('alg')}")
-        
-        # Now verify with the public key
-        payload = jwt.decode(
-            token,
-            PUBLIC_KEY,
-            algorithms=["ES256", "HS256"],  # Try both algorithms
-            options={"verify_aud": False}
-        )
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-        return user_id
-    except jwt.InvalidTokenError as e:
-        print(f"❌ Invalid token error: {str(e)}")
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)) -> str:
+    # credentials.decoded contains the JWT payload
+    user_id = credentials.decoded.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
+    return user_id
         
 # Dependency to get DB session
 def get_db():
@@ -122,21 +115,23 @@ def health_check():
     return {"status": "healthy"}
 
 # Get all todos for the current user
-@app.get("/todos", response_model=List[TodoResponse])
-def get_todos(
-    user_id: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+@app.get("/todos")
+def get_todos(db: Session = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    # Only return todos for this user
     return db.query(Todo).filter(Todo.user_id == user_id).all()
 
-# Create a new todo for the current user
 @app.post("/todos", response_model=TodoResponse)
 def create_todo(
-    todo: TodoCreate,
-    user_id: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    todo: TodoCreate, 
+    db: Session = Depends(get_db), 
+    user_id: str = Depends(get_current_user_id)
 ):
-    db_todo = Todo(**todo.dict(), user_id=user_id)
+    db_todo = Todo(
+        title=todo.title,
+        description=todo.description,
+        completed=todo.completed,
+        user_id=user_id  # Associate the todo with the authenticated user
+    )
     db.add(db_todo)
     db.commit()
     db.refresh(db_todo)
@@ -145,10 +140,10 @@ def create_todo(
 # Update a todo (ensuring it belongs to the user)
 @app.put("/todos/{todo_id}", response_model=TodoResponse)
 def update_todo(
-    todo_id: int,
-    todo: TodoCreate,
-    user_id: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    todo_id: int, 
+    todo: TodoCreate, 
+    db: Session = Depends(get_db), 
+    user_id: str = Depends(get_current_user_id)
 ):
     db_todo = db.query(Todo).filter(Todo.id == todo_id, Todo.user_id == user_id).first()
     if not db_todo:
@@ -163,9 +158,9 @@ def update_todo(
 # Delete a todo (ensuring it belongs to the user)
 @app.delete("/todos/{todo_id}")
 def delete_todo(
-    todo_id: int,
-    user_id: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    todo_id: int, 
+    db: Session = Depends(get_db), 
+    user_id: str = Depends(get_current_user_id)
 ):
     db_todo = db.query(Todo).filter(Todo.id == todo_id, Todo.user_id == user_id).first()
     if not db_todo:
