@@ -20,6 +20,7 @@ if not DATABASE_URL:
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=0)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+allow_origins=["http://localhost:5173", "https://dummy-todo-2.vercel.app"],
 
 # Database model
 class Todo(Base):
