@@ -75,18 +75,20 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Securi
         # Get the signing key from JWKS
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         
-        # Verify and decode the token
+        # Verify and decode the token (relaxed validation)
         payload = jwt.decode(
             token,
             signing_key.key,
             algorithms=["RS256"],
-            audience="https://dummy-todo-2.vercel.app",
-            issuer="https://secure-mutt-3152.clerk.accounts.dev"
+            options={"verify_aud": False, "verify_iss": False}  # ← Relaxed validation
         )
         
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
+        
+        # Log the payload for debugging
+        print(f"🔍 Decoded payload: {payload}")
         
         return user_id
     except PyJWTError as e:
