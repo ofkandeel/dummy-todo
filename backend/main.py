@@ -88,9 +88,21 @@ def db_test():
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
+@app.post("/debug-token")
+async def debug_token(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    return {
+        "token": credentials.credentials[:20] + "...",
+        "decoded": credentials.decoded,
+        "issuer": credentials.decoded.get("iss"),
+        "subject": credentials.decoded.get("sub"),
+        "algorithm": credentials.decoded.get("alg"),
+    }
+
 # ─── PROTECTED ENDPOINTS (require Clerk JWT) ──────────────────────
 
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)) -> str:
+    # Print the entire payload for debugging
+    print(f"🔍 Token payload: {credentials.decoded}")
     user_id = credentials.decoded.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
