@@ -1,7 +1,9 @@
+import jwt
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt import PyJWKClient, PyJWTError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, text
 from sqlalchemy.ext.declarative import declarative_base
@@ -20,7 +22,6 @@ if not DATABASE_URL:
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=0)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-allow_origins=["http://localhost:5173", "https://dummy-todo-2.vercel.app"],
 
 # Database model
 class Todo(Base):
@@ -49,13 +50,6 @@ class TodoResponse(BaseModel):
 # FastAPI app
 app = FastAPI(title="Todo API", version="1.0.0")
 
-# Clerk configuration
-clerk_config = ClerkConfig(
-    jwks_url="https://api.clerk.com/v1/jwks",
-    leeway=5.0
-)
-clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
-
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -65,7 +59,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dependency to get DB session
+# ─── AUTHENTICATION SETUP ──────────────────────────────────────────
+
+# Setup JWKS client for Clerk
+CLERK_JWKS_URL = "https://api.clerk.com/v1/jwks"
+jwks_client = PyJWKClient(CLERK_JWKS_URL)
+
+# HTTP Bearer security
+security = HTTPBearer()
+
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
+    token = credentials.credentials
+    
+    try:
+        # Get the signing key from JWKS
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        
+        # Verify and decode the token
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience="https://dummy-todo-2.vercel.app",
+            issuer="https://secure-mutt-3152.clerk.accounts.dev"
+        )
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
+        
+        return user_id
+    except PyJWTError as e:
+        print(f"JWT validation error: {e}")
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+# ─── DEPENDENCIES ──────────────────────────────────────────────────
+
 def get_db():
     db = SessionLocal()
     try:
@@ -89,24 +118,13 @@ def db_test():
         return {"status": "error", "error": str(e)}
 
 @app.post("/debug-token")
-async def debug_token(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+async def debug_token(user_id: str = Depends(get_current_user_id)):
     return {
-        "token": credentials.credentials[:20] + "...",
-        "decoded": credentials.decoded,
-        "issuer": credentials.decoded.get("iss"),
-        "subject": credentials.decoded.get("sub"),
-        "algorithm": credentials.decoded.get("alg"),
+        "message": "Token is valid",
+        "user_id": user_id
     }
 
-# ─── PROTECTED ENDPOINTS (require Clerk JWT) ──────────────────────
-
-async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)) -> str:
-    # Print the entire payload for debugging
-    print(f"🔍 Token payload: {credentials.decoded}")
-    user_id = credentials.decoded.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
-    return user_id
+# ─── PROTECTED ENDPOINTS ──────────────────────────────────────────
 
 @app.get("/todos")
 def get_todos(db: Session = Depends(get_db), user_id: str = Depends(get_current_user_id)):
