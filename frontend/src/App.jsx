@@ -32,11 +32,19 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // Fetch todos with authentication
-  const fetchTodos = async () => {
+ const fetchTodos = async () => {
     if (!isSignedIn) return;
     setLoading(true);
     try {
       const token = await getToken();
+      console.log('🔑 Token in fetchTodos:', token); // ← Add this line
+      
+      if (!token) {
+        console.error('❌ No token in fetchTodos');
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.get(`${API_BASE_URL}/todos`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -49,7 +57,7 @@ function App() {
       setLoading(false);
     }
   };
-
+  
   // Create a new todo
   const createTodo = async (e) => {
     e.preventDefault();
@@ -57,6 +65,13 @@ function App() {
 
     try {
       const token = await getToken();
+      console.log('🔑 Token being sent:', token); // ← Add this line
+      
+      if (!token) {
+        console.error('❌ No token found!');
+        return;
+      }
+      
       await axios.post(`${API_BASE_URL}/todos`, {
         title,
         description,
@@ -66,9 +81,7 @@ function App() {
           Authorization: `Bearer ${token}`
         }
       });
-      setTitle('');
-      setDescription('');
-      await fetchTodos();
+      // ... rest of the code
     } catch (error) {
       console.error('Error creating todo:', error);
     }
