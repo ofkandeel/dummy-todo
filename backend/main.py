@@ -1,15 +1,14 @@
-import jwt
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient, PyJWTError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from typing import List
+from jwtutils import verify_clerk_token
 
 # Load environment variables
 load_dotenv()
@@ -61,50 +60,17 @@ app.add_middleware(
 
 # ─── AUTHENTICATION SETUP ──────────────────────────────────────────
 
-# Setup JWKS client for Clerk with authentication
-CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY")
-if not CLERK_SECRET_KEY:
-    raise ValueError("CLERK_SECRET_KEY environment variable is not set")
-
-# Setup JWKS client for Clerk with custom headers
-CLERK_JWKS_URL = "https://api.clerk.com/v1/jwks"
-jwks_client = PyJWKClient(
-    CLERK_JWKS_URL,
-    headers={
-        "User-Agent": "FastAPI-Backend/1.0",
-        "Authorization": f"Bearer {CLERK_SECRET_KEY}"  # Add this line
-    }
-)
-
-# HTTP Bearer security
 security = HTTPBearer()
 
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     token = credentials.credentials
-    
-    try:
-        # Get the signing key from JWKS
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
-        
-        # Verify and decode the token (relaxed validation)
-        payload = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["RS256"],
-            options={"verify_aud": False, "verify_iss": False}  # ← Relaxed validation
-        )
-        
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
-        
-        # Log the payload for debugging
-        print(f"🔍 Decoded payload: {payload}")
-        
-        return user_id
-    except PyJWTError as e:
-        print(f"JWT validation error: {e}")
+    payload = verify_clerk_token(token)
+    if not payload:
         raise HTTPException(status_code=403, detail="Forbidden")
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
+    return user_id
 
 # ─── DEPENDENCIES ──────────────────────────────────────────────────
 

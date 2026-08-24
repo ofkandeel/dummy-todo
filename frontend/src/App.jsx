@@ -18,7 +18,10 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { SignIn, SignOutButton, useUser, useAuth } from '@clerk/clerk-react';
 
-const API_BASE_URL = '/api';
+// Use Render backend directly in development
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'https://dummy-todo-api.onrender.com' 
+  : '/api';
 
 function App() {
   const { isSignedIn, user } = useUser();
