@@ -61,11 +61,19 @@ app.add_middleware(
 
 # ─── AUTHENTICATION SETUP ──────────────────────────────────────────
 
+# Setup JWKS client for Clerk with authentication
+CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY")
+if not CLERK_SECRET_KEY:
+    raise ValueError("CLERK_SECRET_KEY environment variable is not set")
+
 # Setup JWKS client for Clerk with custom headers
 CLERK_JWKS_URL = "https://api.clerk.com/v1/jwks"
 jwks_client = PyJWKClient(
     CLERK_JWKS_URL,
-    headers={"User-Agent": "FastAPI-Backend/1.0"}  # Add a User-Agent header
+    headers={
+        "User-Agent": "FastAPI-Backend/1.0",
+        "Authorization": f"Bearer {CLERK_SECRET_KEY}"  # Add this line
+    }
 )
 
 # HTTP Bearer security
