@@ -64,14 +64,19 @@ security = HTTPBearer()
 
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     token = credentials.credentials
-    payload = verify_clerk_token(token)
-    if not payload:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
-    return user_id
-
+    try:
+        payload = verify_clerk_token(token)
+        if not payload:
+            # Return the actual error message in the response
+            raise HTTPException(status_code=401, detail="Token validation failed (see server logs)")
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
+        return user_id
+    except Exception as e:
+        # Log the error and return it to the client
+        print(f"❌ Auth error: {e}")
+        raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
 # ─── DEPENDENCIES ──────────────────────────────────────────────────
 
 def get_db():
