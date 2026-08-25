@@ -1,8 +1,13 @@
 # backend/jwtutils.py
 import jwt
 import os
+import logging
 from jwt import PyJWKClient
 from dotenv import load_dotenv
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -18,10 +23,10 @@ jwks_client = PyJWKClient(
 def verify_clerk_token(token: str) -> dict:
     """Verifies a Clerk JWT and returns the decoded payload."""
     try:
-        print(f"🔍 Verifying token: {token[:20]}...")  # Print first 20 chars
+        logger.info(f"🔍 Verifying token: {token[:20]}...")
         
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-        print(f"🔑 Signing key fetched: {signing_key.key_id}")
+        logger.info(f"🔑 Signing key fetched: {signing_key.key_id}")
         
         payload = jwt.decode(
             token,
@@ -33,8 +38,8 @@ def verify_clerk_token(token: str) -> dict:
                 "verify_iss": True
             }
         )
-        print(f"✅ Decoded payload: {payload}")
+        logger.info(f"✅ Decoded payload: {payload}")
         return payload
     except jwt.PyJWTError as e:
-        print(f"❌ JWT validation error: {e}")
+        logger.error(f"❌ JWT validation error: {e}")
         return None
