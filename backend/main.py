@@ -108,6 +108,22 @@ async def debug_token(user_id: str = Depends(get_current_user_id)):
         "user_id": user_id
     }
 
+@app.get("/test-jwks")
+async def test_jwks():
+    try:
+        # Try to fetch the JWKS keys
+        jwks = jwks_client.get_jwk_set()
+        return {
+            "status": "success",
+            "keys": len(jwks.get("keys", [])),
+            "first_key": jwks.get("keys", [])[0] if jwks.get("keys") else None
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
 # ─── PROTECTED ENDPOINTS ──────────────────────────────────────────
 
 @app.get("/todos")
