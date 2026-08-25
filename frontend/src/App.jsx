@@ -29,61 +29,49 @@ function App() {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Fetch todos with authentication
- const fetchTodos = async () => {
-    if (!isSignedIn) return;
-    setLoading(true);
-    try {
-      const token = await getToken();
-      console.log('🔑 Token in fetchTodos:', token); // ← Add this line
-      
-      if (!token) {
-        console.error('❌ No token in fetchTodos');
-        setLoading(false);
-        return;
+// Fetch todos with authentication
+const fetchTodos = async () => {
+  if (!isSignedIn) return;
+  setLoading(true);
+  try {
+    const token = await getToken();
+    const response = await axios.get(`${API_BASE_URL}/todos`, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-      
-      const response = await axios.get(`${API_BASE_URL}/todos`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setTodos(response.data);
-    } catch (error) {
-      console.error('Error fetching todos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    console.log('🔍 Fetched todos:', response.data); // ✅ Debug log
+    setTodos(response.data);
+  } catch (error) {
+    console.error('Error fetching todos:', error);
+  } finally {
+    setLoading(false);
+  }
+};
   
-  // Create a new todo
-  const createTodo = async (e) => {
-    e.preventDefault();
-    if (!title.trim() || !isSignedIn) return;
+// Create a new todo
+const createTodo = async (e) => {
+  e.preventDefault();
+  if (!title.trim() || !isSignedIn) return;
 
-    try {
-      const token = await getToken();
-      console.log('🔑 Token being sent:', token); // ← Add this line
-      
-      if (!token) {
-        console.error('❌ No token found!');
-        return;
+  try {
+    const token = await getToken();
+    await axios.post(`${API_BASE_URL}/todos`, {
+      title,
+      description,
+      completed: false,
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-      
-      await axios.post(`${API_BASE_URL}/todos`, {
-        title,
-        description,
-        completed: false,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      // ... rest of the code
-    } catch (error) {
-      console.error('Error creating todo:', error);
-    }
-  };
+    });
+    setTitle('');
+    setDescription('');
+    await fetchTodos(); // ✅ This should re-fetch and update the list
+  } catch (error) {
+    console.error('Error creating todo:', error);
+  }
+};
 
   // Toggle todo completion
   const toggleTodo = async (id, completed) => {

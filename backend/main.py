@@ -77,6 +77,7 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Securi
         # Log the error and return it to the client
         print(f"❌ Auth error: {e}")
         raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
+    
 # ─── DEPENDENCIES ──────────────────────────────────────────────────
 
 def get_db():
