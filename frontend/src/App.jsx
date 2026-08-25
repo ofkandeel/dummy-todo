@@ -18,10 +18,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { SignIn, SignOutButton, useUser, useAuth } from '@clerk/clerk-react';
 
-// Use Render backend directly in development
-const API_BASE_URL = import.meta.env.DEV 
-  ? 'https://dummy-todo-api.onrender.com' 
-  : '/api';
+// Remove the conditional and use Render directly
+const API_BASE_URL = 'https://dummy-todo-api.onrender.com';
 
 function App() {
   const { isSignedIn, user } = useUser();
