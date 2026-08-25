@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from typing import List
-from jwtutils import verify_clerk_token
+from jwtutils import verify_clerk_token, jwks_client
 
 # Load environment variables
 load_dotenv()
