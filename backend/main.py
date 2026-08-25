@@ -111,17 +111,26 @@ async def debug_token(user_id: str = Depends(get_current_user_id)):
 @app.get("/test-jwks")
 async def test_jwks():
     try:
-        # Try to fetch the JWKS keys
+        # Fetch the JWKS keys
         jwks = jwks_client.get_jwk_set()
+        
+        # Access the keys as a dictionary (PyJWKSet has a 'keys' attribute)
+        if hasattr(jwks, 'keys'):
+            keys = jwks.keys
+        else:
+            keys = []
+            
         return {
             "status": "success",
-            "keys": len(jwks.get("keys", [])),
-            "first_key": jwks.get("keys", [])[0] if jwks.get("keys") else None
+            "keys": len(keys),
+            "first_key": str(keys[0]) if keys else None,
+            "key_ids": [key.key_id for key in keys] if keys else []
         }
     except Exception as e:
         return {
             "status": "error",
-            "error": str(e)
+            "error": str(e),
+            "type": type(jwks).__name__ if 'jwks' in locals() else "unknown"
         }
 
 # ─── PROTECTED ENDPOINTS ──────────────────────────────────────────
