@@ -6,17 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.kandeeldigitalfactory.dummytodo"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -32,7 +26,6 @@
       "eas": {
         "projectId": "67b0e377-d5dd-4bda-aff5-c8ccb03ebee2"
       }
-    },
-    "owner": "kandeel-digital-factory"
+    }
   }
 }
